@@ -34,7 +34,7 @@ btnEtat = False
 # === Chargement des images ===
 try:
     navIcon = ImageTk.PhotoImage(Image.open("menu.png").resize((25, 25)))
-    closeIcon = ImageTk.PhotoImage(Image.open("Close.png").resize((25, 25)))
+    closeIcon = ImageTk.PhotoImage(Image.open("close.png").resize((25, 25)))
 except Exception as e:
     print("⚠️ Problème de chargement image :", e)
     navIcon = closeIcon = None
@@ -75,9 +75,9 @@ def connexion_mysql():
     try:
         conn = mysql.connector.connect(
             host="localhost",
-            user="root",
-            password="123456789",  # ton mot de passe MySQL
-            database="jobfinder"
+            user="admin_py",
+            password="admin",  # ton mot de passe MySQL
+            database="projet"
         )
         if conn.is_connected():
             return conn
@@ -87,10 +87,10 @@ def connexion_mysql():
 
 def creer_base_et_table():
     try:
-        conn = mysql.connector.connect(host="localhost", user="root", password="")
+        conn = connexion_mysql()
         cursor = conn.cursor()
-        cursor.execute("CREATE DATABASE IF NOT EXISTS jobfinder")
-        cursor.execute("USE jobfinder")
+        #cursor.execute("CREATE DATABASE IF NOT EXISTS projet")
+        #cursor.execute("USE projet")
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS utilisateurs (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -132,6 +132,49 @@ def ajouter_utilisateur(nom, email, mdp):
         finally:
             cursor.close()
             conn.close()
+#pour la verfication de l'autentification
+def login(email, mdp):
+    conn = connexion_mysql()
+    if conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT nom, email FROM utilisateurs WHERE email=%s AND mot_de_passe=%s",
+            (email, mdp)
+        )
+        utilisateur = cursor.fetchone()
+        if utilisateur:
+            global current_user
+            current_user = utilisateur
+            messagebox.showinfo("Succès", "Connexion réussie !")
+            goProfil()
+        else:
+            messagebox.showerror("Erreur", "Email ou mot de passe incorrect")
+        
+        cursor.close()
+        conn.close()
+  #page login      
+def showLogin():
+    for widget in mainFrame.winfo_children():
+        widget.destroy()
+
+    tk.Label(mainFrame, text="Connexion", font=("Arial", 16, "bold"),
+             bg=couleurFondImage, fg="white").pack(pady=20)
+
+    tk.Label(mainFrame, text="Email :", bg=couleurFondImage, fg="white").pack()
+    entryEmail = tk.Entry(mainFrame)
+    entryEmail.pack()
+
+    tk.Label(mainFrame, text="Mot de passe :", bg=couleurFondImage, fg="white").pack()
+    entryMDP = tk.Entry(mainFrame, show="*")
+    entryMDP.pack()
+
+    tk.Button(mainFrame, text="Se connecter", bg="#0d47a1", fg="white",
+              command=lambda: login(entryEmail.get(), entryMDP.get())
+    ).pack(pady=10)
+
+    tk.Label(mainFrame, text="S'inscrire", fg="white",
+             bg=couleurFondImage, cursor="hand2").pack(pady=5)
+    tk.Label(mainFrame, text="").bind("<Button-1>", lambda e: showInscription())
 
 # --- Page d'inscription ---
 def showInscription():
@@ -201,19 +244,19 @@ def showAccueil():
     # Lien "Se connecter"
     lienLogin = tk.Label(
         mainFrame,
-        text="Déjà un compte ? Se connecter",
+        text="Se connecter",
         font=("Arial", 11, "underline"),
         bg=couleurFondImage,
         fg="white",
         cursor="hand2"
     )
     lienLogin.place(relx=0.5, rely=0.65, anchor="center")
-    lienLogin.bind("<Button-1>", lambda e: goProfil())
+    lienLogin.bind("<Button-1>", lambda e: showLogin())
 
     # Lien "S'inscrire"
     lienInscription = tk.Label(
         mainFrame,
-        text="Pas de compte ? S'inscrire",
+        text="S'inscrire",
         font=("Arial", 11, "underline"),
         bg=couleurFondImage,
         fg="white",
@@ -291,8 +334,12 @@ def goProfil():
     else:
         tk.Label(mainFrame, text="Aucun utilisateur connecté", font=("Arial", 14),
                  bg=couleurFondImage, fg="white").pack(pady=50)
+        tk.Button(mainFrame, text="Se connecter", bg="#0d47a1", fg="white",
+          command=showLogin).pack(pady=10)
+
         tk.Button(mainFrame, text="S'inscrire", bg="#0d47a1", fg="white",
-                  command=showInscription).pack(pady=10)
+          command=showInscription).pack(pady=10)
+
 
 def goOffres():
     toggleMenu()
