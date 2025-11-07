@@ -231,7 +231,6 @@ def login(email, mdp):
             # rediriger selon role
             if role_db == 'admin':
                 admin_dashboard()
-                gestion()
             elif role_db == 'rh':
                 rh_dashboard()
             else:
@@ -508,6 +507,15 @@ def reset_password(user_id, new_password):
 def admin_dashboard():
     for w in mainFrame.winfo_children():
         w.destroy()
+    tk.Button(navLateral,
+        text="gestion",
+        font=("Arial", 13, "bold"),
+        bg="gray30",
+        fg=couleur["white"],
+        activebackground="#333333",
+        bd=0,
+        command=admin_dashboard).place(x=25, y=280)
+
     tk.Label(mainFrame, text="Tableau de bord Admin", font=("Arial", 16, "bold"),
              bg=couleurFondImage, fg="white").pack(pady=20)
     # boutons admin utiles
@@ -517,6 +525,14 @@ def admin_dashboard():
 def rh_dashboard():
     for w in mainFrame.winfo_children():
         w.destroy()
+        tk.Button(navLateral,
+        text="votre espace",
+        font=("Arial", 13, "bold"),
+        bg="gray30",
+        fg=couleur["white"],
+        activebackground="#333333",
+        bd=0,
+        command=rh_dashboard).place(x=25, y=280)
     tk.Label(mainFrame, text="Espace RH", font=("Arial", 16, "bold"),
              bg=couleurFondImage, fg="white").pack(pady=20)
     tk.Button(mainFrame, text="Déconnexion", command=logout).pack(pady=10)
@@ -524,6 +540,14 @@ def rh_dashboard():
 def user_dashboard():
     for w in mainFrame.winfo_children():
         w.destroy()
+        tk.Button(navLateral,
+        text="votre espace",
+        font=("Arial", 13, "bold"),
+        bg="gray30",
+        fg=couleur["white"],
+        activebackground="#333333",
+        bd=0,
+        command=user_dashboard).place(x=25, y=280)
     tk.Label(mainFrame, text="Espace Chercheur", font=("Arial", 16, "bold"),
              bg=couleurFondImage, fg="white").pack(pady=20)
     tk.Button(mainFrame, text="Déconnexion", command=logout).pack(pady=10)
@@ -532,8 +556,63 @@ def logout():
     global current_user, current_user_role
     current_user = None
     current_user_role = None
-    messagebox.showinfo("Déconnecté", "Vous avez été déconnecté")
-    showAccueil()
+    messagebox.showinfo("Déconnexion", "Vous avez été déconnecté.")
+    update_navbar()  # met à jour le menu
+    showAccueil()    # retourne à la page d'accueil
+
+
+def update_navbar():
+    # Efface tous les widgets du menu
+    for widget in navLateral.winfo_children():
+        widget.destroy()
+
+    # En-tête du menu
+    tk.Label(
+        navLateral,
+        text="MENU",
+        font=("Arial", 15, "bold"),
+        bg="#0d47a1",
+        fg="white",
+        width=300,
+        height=2
+    ).place(x=0, y=0)
+
+    # Boutons du menu principal
+    y = 80
+    menu_items = [
+        ("Accueil", goAccueil),
+        ("Profil", goProfil),
+        ("Offres d'emploi", goOffres),
+        ("Paramètres", goParametres),
+        ("Contact", goContact)
+    ]
+
+    for text, cmd in menu_items:
+        tk.Button(
+            navLateral,
+            text=text,
+            font=("Arial", 13, "bold"),
+            bg="gray30",
+            fg=couleur["white"],
+            activebackground="#333333",
+            bd=0,
+            command=cmd
+        ).place(x=25, y=y)
+        y += 40
+
+    # Si un utilisateur est connecté → afficher le bouton Déconnexion
+    if current_user:
+        tk.Button(
+            navLateral,
+            text="Déconnexion",
+            font=("Arial", 13, "bold"),
+            bg="#d32f2f",
+            fg="white",
+            activebackground="#b71c1c",
+            bd=0,
+            command=logout
+        ).place(x=25, y=y + 20)
+
 
 # -----------------------------
 # Forms : Login / Inscription / Accueil
@@ -767,17 +846,7 @@ for text, cmd in menu_buttons:
     ).place(x=25, y=y)
     y += 40
 
-def gestion():
-    toggleMenu()
-    tk.Button(navLateral,
-        text="gestion",
-        font=("Arial", 13, "bold"),
-        bg="gray30",
-        fg=couleur["white"],
-        activebackground="#333333",
-        bd=0,
-        command=admin_dashboard).place(x=25, y=280)
-
+   
 # === FONCTION POUR LE MENU BURGER ===
 def toggleMenu():
     global btnEtat
@@ -802,16 +871,6 @@ def toggleMenu():
 navbarBtn.config(command=toggleMenu)
 
 
-def gestion():
-
-        tk.Button(navLateral,
-        text="gestion",
-        font=("Arial", 13, "bold"),
-        bg="gray30",
-        fg=couleur["white"],
-        activebackground="#333333",
-        bd=0,
-        command=admin_dashboard).place(x=25, y=280)
 
 # === PAGE PAR DÉFAUT ===
 showAccueil()
