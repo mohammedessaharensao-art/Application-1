@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import Canvas, NW
 from PIL import Image, ImageTk
 import webbrowser
-from tkinter import messagebox
+from tkinter import messagebox, Toplevel, Label, Entry, Text, Button
 import mysql.connector
 from mysql.connector import Error
 import bcrypt
@@ -32,7 +32,7 @@ app.geometry("400x600")
 
 # === Icône (facultative) ===
 try:
-    app.iconbitmap("logo.ico")
+    app.iconbitmap("sahar.ico")
 except Exception as e:
     print("Icône non trouvée :", e)
 
@@ -112,6 +112,16 @@ def creer_base_et_table():
         #         role ENUM('admin','rh','chercheur','user') DEFAULT 'user'
         #     )
         # """)
+       # cursor.execute("""  CREATE TABLE IF NOT EXISTS offres (
+        #id INT AUTO_INCREMENT PRIMARY KEY,
+        #titre VARCHAR(150),
+        #description TEXT,
+        #lieu VARCHAR(100),
+        #salaire VARCHAR(50),
+        #type VARCHAR(50),
+         #date_publication DATETIME DEFAULT CURRENT_TIMESTAMP
+        #)""")
+
         conn.commit()
         cursor.close()
         conn.close()
@@ -533,8 +543,10 @@ def rh_dashboard():
         activebackground="#333333",
         bd=0,
         command=rh_dashboard).place(x=25, y=280)
+    
     tk.Label(mainFrame, text="Espace RH", font=("Arial", 16, "bold"),
              bg=couleurFondImage, fg="white").pack(pady=20)
+    tk.Button(mainFrame, text="ajouter un offre", command=open_add_offre_window).pack(pady=5)
     tk.Button(mainFrame, text="Déconnexion", command=logout).pack(pady=10)
 
 def user_dashboard():
@@ -726,6 +738,67 @@ def showAccueil():
     )
     lienInscription.place(relx=0.5, rely=0.70, anchor="center")
     lienInscription.bind("<Button-1>", lambda e: showInscription())
+
+#---------------------rh-----------------
+
+def open_add_offre_window():
+    # Crée une nouvelle fenêtre (popup)
+    add_window = Toplevel()
+    add_window.title("Ajouter une offre")
+    add_window.geometry("400x500")
+    
+    Label(add_window, text="Titre :", font=("Arial", 12)).pack(pady=5)
+    titre_entry = Entry(add_window, width=40)
+    titre_entry.pack(pady=5)
+
+    Label(add_window, text="Description :", font=("Arial", 12)).pack(pady=5)
+    description_text = Text(add_window, width=40, height=5)
+    description_text.pack(pady=5)
+
+    Label(add_window, text="Lieu :", font=("Arial", 12)).pack(pady=5)
+    lieu_entry = Entry(add_window, width=40)
+    lieu_entry.pack(pady=5)
+
+    Label(add_window, text="Salaire :", font=("Arial", 12)).pack(pady=5)
+    salaire_entry = Entry(add_window, width=40)
+    salaire_entry.pack(pady=5)
+
+    Label(add_window, text="Type (CDI, Stage, ...):", font=("Arial", 12)).pack(pady=5)
+    type_entry = Entry(add_window, width=40)
+    type_entry.pack(pady=5)
+
+    def save_offre():
+        titre = titre_entry.get().strip()
+        description = description_text.get("1.0", "end-1c").strip()
+        lieu = lieu_entry.get().strip()
+        salaire = salaire_entry.get().strip()
+        type_offre = type_entry.get().strip()
+
+        if not titre or not description or not lieu or not type_offre:
+            messagebox.showwarning("Champs manquants", "Merci de remplir tous les champs.")
+            return
+
+        try:
+            conn = mysql.connector.connect(
+                host="localhost",
+                user="admin_py",
+                password="admin",
+                database="projet"
+            )
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO offres (titre, description, lieu, salaire, type)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (titre, description, lieu, salaire, type_offre))
+            conn.commit()
+            conn.close()
+
+            messagebox.showinfo("Succès", "Offre ajoutée avec succès ✅")
+            add_window.destroy()
+        except mysql.connector.Error as err:
+            messagebox.showerror("Erreur", f"Erreur lors de l'ajout de l'offre : {err}")
+
+    Button(add_window, text="Enregistrer l'offre", command=save_offre, bg="#4CAF50", fg="white").pack(pady=15)
 
 # -----------------------------
 # Contact and navigation
