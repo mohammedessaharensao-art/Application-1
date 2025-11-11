@@ -1,12 +1,14 @@
 # App2.py - version corrigée (conserve ta structure originale, corrige bugs)
 import tkinter as tk
 from tkinter import Canvas, NW
-from PIL import Image, ImageTk
 import webbrowser
 from tkinter import messagebox, Toplevel, Label, Entry, Text, Button
 import mysql.connector
 from mysql.connector import Error
 import bcrypt
+from tkinter import *
+from tkinter import ttk, messagebox
+from PIL import Image, ImageTk
 
 # -----------------------------
 # Variables globales
@@ -511,6 +513,60 @@ def reset_password(user_id, new_password):
     cursor.close()
     conn.close()
 
+
+def open_list_offres_window():
+    # Crée une fenêtre popup
+    list_window = Toplevel()
+    list_window.title("Liste des offres d'emploi")
+    list_window.geometry("750x500")
+
+    Label(list_window, text="Liste des offres disponibles", font=("Arial", 14, "bold")).pack(pady=10)
+
+    # Zone de recherche
+    search_frame = Frame(list_window)
+    search_frame.pack(pady=5)
+
+    Label(search_frame, text="Rechercher :", font=("Arial", 11)).pack(side=LEFT, padx=5)
+    search_entry = Entry(search_frame, width=30)
+    search_entry.pack(side=LEFT, padx=5)
+
+    def refresh_offres(filter_text=""):
+        for row in tree.get_children():
+            tree.delete(row)
+
+        try:
+            conn = mysql.connector.connect(
+                host="localhost",
+                user="admin_py",
+                password="admin",
+                database="projet"
+            )
+            cursor = conn.cursor()
+            if filter_text:
+                query = "SELECT titre, lieu, type, salaire, date_publication FROM offres WHERE titre LIKE %s OR type LIKE %s ORDER BY date_publication DESC"
+                cursor.execute(query, (f"%{filter_text}%", f"%{filter_text}%"))
+            else:
+                cursor.execute("SELECT titre, lieu, type, salaire, date_publication FROM offres ORDER BY date_publication DESC")
+            offres = cursor.fetchall()
+            conn.close()
+
+            for offre in offres:
+                tree.insert("", "end", values=offre)
+        except mysql.connector.Error as err:
+            messagebox.showerror("Erreur", f"Impossible de charger les offres : {err}")
+
+    Button(search_frame, text="🔍 Rechercher", command=lambda: refresh_offres(search_entry.get())).pack(side=LEFT, padx=5)
+
+    # Tableau pour afficher les offres
+    columns = ("Titre", "Lieu", "Type", "Salaire", "Date de publication")
+    tree = ttk.Treeview(list_window, columns=columns, show="headings", height=15)
+    for col in columns:
+        tree.heading(col, text=col)
+        tree.column(col, width=140)
+    tree.pack(padx=10, pady=10, fill=BOTH, expand=True)
+
+    refresh_offres()
+
 # -----------------------------
 # Dashboards
 # -----------------------------
@@ -547,6 +603,7 @@ def rh_dashboard():
     tk.Label(mainFrame, text="Espace RH", font=("Arial", 16, "bold"),
              bg=couleurFondImage, fg="white").pack(pady=20)
     tk.Button(mainFrame, text="ajouter un offre", command=open_add_offre_window).pack(pady=5)
+    tk.Button(mainFrame, text="Voir Offres", command=open_list_offres_window).pack(pady=5)
     tk.Button(mainFrame, text="Déconnexion", command=logout).pack(pady=10)
 
 def user_dashboard():
